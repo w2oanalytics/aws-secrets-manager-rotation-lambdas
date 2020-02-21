@@ -97,7 +97,10 @@ def create_secret(service_client, arn, token):
         # Get exclude characters from environment variable
         exclude_characters = os.environ['EXCLUDE_CHARACTERS'] if 'EXCLUDE_CHARACTERS' in os.environ else '/@"\'\\'
         # Generate a random password
-        passwd = service_client.get_random_password(ExcludeCharacters=exclude_characters)
+        passwd = service_client.get_random_password(
+            ExcludeCharacters=exclude_characters,
+            ExcludePunctuation=True
+        )
 
         # Put the secret
         service_client.put_secret_value(SecretId=arn, ClientRequestToken=token, SecretString=passwd['RandomPassword'], VersionStages=['AWSPENDING'])

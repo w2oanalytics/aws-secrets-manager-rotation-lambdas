@@ -1,0 +1,94 @@
+Transform: AWS::Serverless-2016-10-31
+Description: AWS CloudFormation template to create RDS password rotation functions that
+  integrate with Secrets Manager built-in rotation capability.
+Parameters:
+  Endpoint:
+    Type: String
+    Description: The Secrets Manager endpoint to hit
+  FunctionName:
+    Type: String
+    Description: The name of the lambda function
+  InvokingServicePrincipal:
+    Type: String
+    Description: The Service Principal of the invoking service
+    Default: secretsmanager.amazonaws.com
+  VpcSubnetIds:
+    Type: String
+    Description: List of VPC subnet IDs (comma separated strings)
+    Default: ''
+  VpcSecurityGroupIds:
+    Type: String
+    Description: List of VPC security grouop IDs (comma separated strings)
+    Default: ''
+  KmsKeyArn:
+    Type: String
+    Description: The kms key used to encrypt the secret being rotated
+    Default: ''
+  ExcludeCharacters:
+    Type: String
+    Description: Characters to exclude from password
+    Default: ''
+Conditions:
+  AddVpcConfig: !And
+    - !Not [!Equals ['', !Ref VpcSubnetIds]]
+    - !Not [!Equals ['', !Ref VpcSecurityGroupIds]]
+  KmsKeyArnExists: !Not [!Equals ['', !Ref KmsKeyArn]]
+  IsExcludeCharactersEmpty: !Equals ['', !Ref ExcludeCharacters]
+Metadata:
+  AWS::ServerlessRepo::Application:
+    Name: secrets-manager-postgres-rotation-single-user
+    Description: Lambda functions to rotate RDS Postgres passwords that are stored in Secrets Manager.
+    Author: W2O Analytics
+    SpdxLicenseId: Apache-2.0
+    LicenseUrl: ../LICENSE
+    ReadmeUrl: ../README.md
+    Labels: ['rds', 'secretsmanager', 'secrets', 'passwords']
+    HomePageUrl: https://github.com/w2oanalytics/aws-secrets-manager-rotation-lambdas
+    SemanticVersion: 0.0.1
+    SourceCodeUrl: https://github.com/w2oanalytics/aws-secrets-manager-rotation-lambdas
+Resources:
+  SecretsManagerRDSPostgreSQLRotationSingleUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      CodeUri: .
+      Description: Conducts an AWS SecretsManager secret rotation for RDS PostgreSQL using single user rotation scheme
+      Handler: lambda_function.lambda_handler
+      Runtime: python3.7
+      Timeout: 30
+      Policies:
+        - VPCAccessPolicy: {}
+        - AWSSecretsManagerRotationPolicy:
+            FunctionName: !Ref FunctionName
+        - !If
+          - KmsKeyArnExists
+          - Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                  - kms:DescribeKey
+                  - kms:GenerateDataKey
+                Resource: !Ref KmsKeyArn
+          - !Ref AWS::NoValue
+      Environment:
+        Variables:
+          SECRETS_MANAGER_ENDPOINT: !Ref Endpoint
+          EXCLUDE_CHARACTERS: !If [ IsExcludeCharactersEmpty, !Ref AWS::NoValue, !Ref ExcludeCharacters ]
+      VpcConfig: !If
+        - AddVpcConfig
+        - SubnetIds: !Ref VpcSubnetIds
+          SecurityGroupIds: !Ref VpcSecurityGroupIds
+        - !Ref AWS::NoValue
+      Tags:
+        SecretsManagerLambda: Rotation
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt SecretsManagerRDSPostgreSQLRotationSingleUser.Arn
+      Principal: !Ref InvokingServicePrincipal
+Outputs:
+  RotationLambdaARN:
+    Description: The ARN of the rotation lambda
+    Value: !GetAtt SecretsManagerRDSPostgreSQLRotationSingleUser.Arn
