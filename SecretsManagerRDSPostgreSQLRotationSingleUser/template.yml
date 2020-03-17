@@ -41,10 +41,10 @@ Metadata:
     Author: W2O Analytics
     SpdxLicenseId: Apache-2.0
     LicenseUrl: ../LICENSE
-    ReadmeUrl: ../README.md
+    ReadmeUrl: README.md
     Labels: ['rds', 'secretsmanager', 'secrets', 'passwords']
     HomePageUrl: https://github.com/w2oanalytics/aws-secrets-manager-rotation-lambdas
-    SemanticVersion: 0.0.1
+    SemanticVersion: 0.0.2
     SourceCodeUrl: https://github.com/w2oanalytics/aws-secrets-manager-rotation-lambdas
 Resources:
   SecretsManagerRDSPostgreSQLRotationSingleUser:
