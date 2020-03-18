@@ -57,6 +57,18 @@ def lambda_handler(event, context):
 
     # Make sure the version is staged correctly
     metadata = service_client.describe_secret(SecretId=arn)
+
+    my_label = current_password = ""
+    if "Tags" in metadata:
+        for kvp in metadata["Tags"]:
+            if kvp["Key"] == "w2o:component:label":
+                my_label = kvp["Value"]
+            if kvp["Key"] == "current-password":
+                current_password = kvp["Value"]
+    if my_label and current_password and my_label == current_password:
+        logger.error("Secret %s is currently in use" % arn)
+        raise ValueError("Secret %s is currently in use" % arn)
+
     if "RotationEnabled" in metadata and not metadata['RotationEnabled']:
         logger.error("Secret %s is not enabled for rotation" % arn)
         raise ValueError("Secret %s is not enabled for rotation" % arn)
