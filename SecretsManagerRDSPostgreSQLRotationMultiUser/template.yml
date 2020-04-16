@@ -56,7 +56,7 @@ Metadata:
     ReadmeUrl: README.md
     Labels: ['rds', 'secretsmanager', 'secrets', 'passwords']
     HomePageUrl: https://github.com/w2oanalytics/aws-secrets-manager-rotation-lambdas
-    SemanticVersion: 0.0.2
+    SemanticVersion: 0.0.3
     SourceCodeUrl: https://github.com/w2oanalytics/aws-secrets-manager-rotation-lambdas
 Resources:
   SecretsManagerRDSPostgreSQLRotationMultiUser:
